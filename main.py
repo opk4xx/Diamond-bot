@@ -1,43 +1,35 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# ---- Yaha apna Token aur UPI ID daalna ----
-TOKEN = "8254272510:AAHkVUVsI5rslCOTFCk7mWOcRjQSzeLRu_I"
+# Configuration
+BOT_TOKEN = "8254272510:AAHkVUVsI5rslCOTFCk7mWOcRjQSzeLRu_I"
 UPI_ID = "opk4xx@ybl"
+DIAMOND_AMOUNT = 199
+PRICE = 29
 
-# ---- Commands ----
-def start(update, context):
-    update.message.reply_text(
-        f"👋 Welcome to Diamond Generator Bot!\n\n"
-        f"💎 199 Diamonds = ₹29 only\n\n"
-        f"📌 Pay on UPI: {UPI_ID}\n\n"
-        f"✅ After payment send screenshot here."
+def start(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=f"👋 Welcome!\n\n💎 {DIAMOND_AMOUNT} Diamonds = ₹{PRICE}\n"
+             f"Pay via UPI: {UPI_ID}\nSend screenshot after payment."
     )
 
-def help_cmd(update, context):
-    update.message.reply_text(
-        "❓ Help:\n\n"
-        "1. Type /start to see diamond details.\n"
-        "2. Pay ₹29 on given UPI ID.\n"
-        "3. Send screenshot here.\n"
-        "4. Verification ke baad diamonds milega ✅"
-    )
+def handle_message(update: Update, context: CallbackContext):
+    chat_id = update.message.chat_id
+    text = update.message.text.lower()
+    if "screenshot" in text or "payment" in text:
+        context.bot.send_message(chat_id=chat_id,
+                                 text="📷 Screenshot received!\n💎 Diamonds added ✅")
+    else:
+        context.bot.send_message(chat_id=chat_id,
+                                 text="⚠️ Please send your payment screenshot after paying via UPI.")
 
-def handle_photo(update, context):
-    update.message.reply_text("📷 Screenshot received! Verification ke baad diamonds milega ✅")
-
-def handle_text(update, context):
-    update.message.reply_text("⚠️ Sirf screenshot bhejo ya /start likho!")
-
-# ---- Bot Setup ----
 def main():
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater(BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
-
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_cmd))
-    dp.add_handler(MessageHandler(Filters.photo, handle_photo))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text))
-
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
     updater.start_polling()
     updater.idle()
 
